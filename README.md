@@ -1,12 +1,12 @@
 This program is for backup photos from SD/CF card to another device.
-This program is written in MacOS, can be modified to work on Linux/Windows. 
+It written with MacOS, can be modified to work on Linux/Windows. 
 
 Dependency:
-    boost gls awk tr
+    ```boost gls awk tr```
 
 Compile: 
     ```make ```
-or: 
+or
     ```mkdir build; cd build; cmake ..; make```
 
 ```
