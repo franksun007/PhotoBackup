@@ -90,7 +90,7 @@ int main(int argc, char ** argv) {
         if (argc == 1 || vm.count("help")) {
             cout << desc << "\n";
             usage();
-            return 1;
+            exit(1);
         }
 
         if (vm.count("source")) {
