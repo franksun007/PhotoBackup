@@ -14,21 +14,21 @@
 #include <boost/program_options.hpp>
 
 
-#define JPEG    1
+#define JPEG    1               //  Macro for JPEG
 #define CR2     2
-#define ALL     (JPEG | CR2)
+#define ALL     3
 
-#define MISC_FOLDER "MISC"
+#define MISC_FOLDER "MISC"      // Macro for MISC folder
 
-using namespace std;                // For eveything 
-namespace fs = boost::filesystem;   // For boost fs
-namespace algo = boost::algorithm;  // For boost string algo
-namespace po = boost::program_options;  // boost program_options
+using namespace std;                    // For eveything
+namespace fs = boost::filesystem;       // For boost fs
+namespace algo = boost::algorithm;      // For boost string algo
+namespace po = boost::program_options;  // For boost command line options
 
-#define DEST  "/Volumes/PHOTO_BACKUP_128G/"  // Destination folder
+#define DEST  "/Volumes/PHOTO_BACKUP_128G/"  // Default destination folder
 const string LS_COMMAND_WITH_DATE = "gls -1ogh --time-style=long-iso "; // ls command
 const string POSTPROCESS_COMMAND_SRC = "awk '{print $4\"_\"$6}' | tr - '_'";  // process command
-const string LS_COMMAND_NORMAL = "gls -1h ";
+const string LS_COMMAND_NORMAL = "gls -1h ";    // normal ls command
 
 // Custom structure that contains the information about the most recent file backed up
 typedef struct {
@@ -36,7 +36,7 @@ typedef struct {
     int month;
     int day;
     int id;
-    string filename;
+    string filename;        // The original filename of the file
 } copy_recent_details;
 
 void usage();  // Print out the usage of the program
@@ -70,6 +70,7 @@ int main(int argc, char ** argv) {
 
     cout << "<============= SET UP REPORT ============>" << endl;
 
+    // Section to process command line arguments
     try {
         po::options_description desc("Allowed options");
 
@@ -190,13 +191,18 @@ int main(int argc, char ** argv) {
         cout << "copy_recent:\t" << copy_recent << endl;
     }
 
+    // To construct and validate source directory
     string src_folder("/Volumes/" + device_name + "/DCIM/");
     fs::path src_dir = validateDirectory(src_folder);
+
     if (verbose) {
         cout << "src_dir: " << src_dir << endl;
     }
+
+    // To construct/get and validate all the subfolders of the source directory
     vector<fs::path> src_folder_subfolders = getAllSubFolders(src_dir);
     processMisc(src_folder_subfolders, misc);
+
     if (verbose) {
         cout << "src_folder_subfolders: " << endl;
         for (auto src_folder_subfolder : src_folder_subfolders) {
@@ -204,15 +210,19 @@ int main(int argc, char ** argv) {
         }
     }
 
+    // To construct and validate the destination directory
     fs::path dest_dir = validateDirectory(destination_folder);
+
     if (verbose) {
         cout << "dest_dir: " << dest_dir << endl;
     }
 
+    // To process the most recent file that's been backed in the destination directory
     copy_recent_details crd = {0, 0, 0, 0};
     if (copy_recent) {
         processCopyRecent(crd, dest_dir, file_type);
     }
+
     cout << "The last file you copied since last backup with prefix: " << crd.filename << endl;
 
     cout << "<=========== SET UP REPORT DONE =========>" << endl;
@@ -221,11 +231,16 @@ int main(int argc, char ** argv) {
 
     cout << "<========== GENERATING COPY LIST =========>" << endl;
 
+
     int total_files;
+    // Data structure that will map subfolder to a map that :
+    //      maps the original image name to the target image name with
+    //      file date as prefix
     map<fs::path, map<string, string>> folder_to_image_list;
     // Get the list of the photos that we gonna copy
     for (auto src_folder_subfolder : src_folder_subfolders) {
         map<string, string> result;
+        // Generate the list of photos we want to copy in a specific subdirectory
         generateCopyList(src_folder_subfolder, file_type, copy_recent, crd, result);
         folder_to_image_list[src_folder_subfolder] = result;
 
@@ -234,6 +249,7 @@ int main(int argc, char ** argv) {
             cout << "Num Files: " << result.size() << endl;
         }
 
+        // Increment the number of files we want to process
         total_files += result.size();
     }
 
@@ -243,6 +259,7 @@ int main(int argc, char ** argv) {
 
     cout << "<===============  COPYING  ==============>" << endl;
 
+    // Process the copying
     copyPhotos(folder_to_image_list, dest_dir, total_files);
 
     cout << "<===============    DONE   ==============>" << endl;
@@ -262,33 +279,39 @@ void processCopyRecent(copy_recent_details &crd, const fs::path &dest_dir, int f
         extension = ".CR2";
     }
 
+    // Iterate through the folder and add all the files matching the extension a vector
     vector<fs::path> files;
     fs::directory_iterator end_itr; // default construction yields past-the-end
     for ( fs::directory_iterator itr( dest_dir );
           itr != end_itr;
           ++itr ) {
         if ( !fs::is_directory(itr->status()) ) {
-            if ((itr->path().filename()).string().find(extension) != string::npos)
+            if ((itr->path().filename()).string().find(extension) != string::npos) {
                 files.push_back(itr->path().filename());
+            }
         }
     }
 
+    // Sort the vector by name
     sort(files.begin(), files.end(), compareFilenames);
 
     if (verbose) {
         cout << "Last File: " << files[files.size() - 1].string() << endl;
     }
 
+    // Grab the last element in the vector
     string component = files[files.size() - 1].stem().string();
 
     if (verbose) {
         cout << "After stem: " << component << endl;
     }
 
+    // Decompose the last element
     vector<string> components;
     boost::split(components, component, boost::is_any_of("_"));
     assert(components.size() == 5);
 
+    // Pretty unnecessary, but fill in the blanks.
     try {
         crd.year = atoi(components[0].c_str());
         crd.month = atoi(components[1].c_str());
@@ -316,11 +339,12 @@ void processCopyRecent(copy_recent_details &crd, const fs::path &dest_dir, int f
 }
 
 fs::path validateDirectory(const string &dir) {
-    // check if source folder exists
+    // check if a folder exists
     fs::path src_dir(dir);
     if (fs::exists(src_dir) && fs::is_directory(src_dir)) {
-        if (verbose)
+        if (verbose) {
             cout << "Directory exists: " << dir << endl;
+        }
     } else {
         cout << "The folder does not exist:" << endl;
         cout << "\t" << dir << endl;
@@ -336,6 +360,8 @@ vector<fs::path> getAllSubFolders(const fs::path &dir) {
         cout << "getAllSubFolders: the target folder does not exists: " << dir << endl;
         exit(1);
     }
+
+    // Iterator that will add all the directory to a vector
     vector<fs::path> result;
     fs::directory_iterator end_itr; // default construction yields past-the-end
     for ( fs::directory_iterator itr( dir );
@@ -350,6 +376,12 @@ vector<fs::path> getAllSubFolders(const fs::path &dir) {
 
 
 void usage() {
+
+    cout << "This program is aiming to copy images from one folder to another." << endl;
+    cout << "It is not designed to copy images, but not limit to." << endl;
+    cout << "The target file copied will be rename as <Creation Date>_<Original Filename>" << endl;
+    cout << "Eg. example.jpg  ->>   2017_03_21_example.jpg." << endl;
+
     cout << "Mandatory Parameters: " << endl;
     cout << "--source " << endl;
     cout << "\tThe name of the device. eg. EOS_DIGITAL" << endl;
@@ -378,6 +410,8 @@ void usage() {
 
 void processMisc(vector<fs::path> &src_folder_subfolders, const int misc) {
     if (!misc) {
+        // Get rid of the MISC folder
+        // Don't know a better way to do this
         int index = -1;
         for (int i = 0 ; i < src_folder_subfolders.size(); i++) {
             if (src_folder_subfolders[i].string().find(MISC_FOLDER) != string::npos) {
@@ -395,16 +429,18 @@ void processMisc(vector<fs::path> &src_folder_subfolders, const int misc) {
 
 // Exec a command line command and return the value to the parent function
 std::string exec(const char* cmd) {
+    int buffer_size = 128;
+
     if (verbose) {
         cout << "Executing command: " << endl;
         cout << "\t" << cmd << endl;
     }
-    char buffer[128];
+    char buffer[buffer_size];
     std::string result = "";
     std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
     if (!pipe) throw std::runtime_error("popen() failed!");
     while (!feof(pipe.get())) {
-        if (fgets(buffer, 128, pipe.get()) != NULL)
+        if (fgets(buffer, buffer_size, pipe.get()) != NULL)
             result += buffer;
     }
     return result;
@@ -423,6 +459,7 @@ void generateCopyList(const fs::path &src_subfolder,
 
     string result_from_exec;
 
+    // Get a list of the original images.
     vector<string> original_images;
     result_from_exec = exec(("(cd " + src_subfolder.string() + " && " + LS_COMMAND_NORMAL + extension + ")" ).c_str());
 
@@ -431,14 +468,17 @@ void generateCopyList(const fs::path &src_subfolder,
         cout << result_from_exec << endl;
     }
 
+    // If the subfolder contains nothing
     if (result_from_exec.size() == 0 || result_from_exec.find("total 0") != string::npos) {
         cout << "No files found in directory: " << endl;
         cout << "\t" << src_subfolder << endl;
         cout << "Skipping... " << endl;
         return;
     }
+    // Otherwise split by lines.
     boost::split(original_images, result_from_exec, boost::is_any_of("\n"));
 
+    // Get a list of the original images, that the name has been changed to the target filename
     vector<string> modified_images;
     result_from_exec = exec(("(cd " + src_subfolder.string() + " && " + LS_COMMAND_WITH_DATE +
             extension + ") | " + POSTPROCESS_COMMAND_SRC).c_str());
@@ -451,20 +491,27 @@ void generateCopyList(const fs::path &src_subfolder,
         auto original_image = original_images[i];
         auto modified_image = modified_images[i];
 
+        // If matching the copy_recent condition, add to the map.
         if (copy_recent) {
             if ((modified_image > crd.filename) && modified_image.find(crd.filename) == string::npos) {
                 result[original_image] = modified_image;
+
                 if (verbose) {
                     cout << original_image << endl;
                     cout << modified_image << endl;
                 }
+
             }
+        } else {    // else we add everything
+            result[original_image] = modified_image;
         }
     }
     return;
 }
 
+
 void printProgress(int processed, int total) {
+    // Fancy way to print the progress
     float progress = float(1.0 * processed / total);
     int barWidth = 70;
 
@@ -482,10 +529,10 @@ void printProgress(int processed, int total) {
 
 void copyPhotos(const map<fs::path, map<string, string>> &folder_to_image_list, const fs::path &dest_dir, int total) {
 
-
     cout << "Total number of files to copy: " << total << endl;
 
     int progress = 0;
+    // Iterate through the map / key
     for (auto itr = folder_to_image_list.begin();
             itr != folder_to_image_list.end();
             itr++) {
@@ -494,6 +541,7 @@ void copyPhotos(const map<fs::path, map<string, string>> &folder_to_image_list, 
 
         map<string, string> value = itr->second;
 
+        // Iterate through the map / value
         for (auto itr_val = value.begin();
                 itr_val != value.end();
                 itr_val++) {
