@@ -1,4 +1,3 @@
-<============= SET UP REPORT ============>
 Allowed options:
   --help                produce help message
   --source arg          the source folder to copy from
