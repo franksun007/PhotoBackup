@@ -1,16 +1,4 @@
-This program is for backup photos from SD/CF card to another device.
-It written with MacOS, can be modified to work on Linux/Windows. 
-
-Dependency:
-    ```boost gls awk tr```
-
-Compile: 
-    ```make ```
-or
-    ```mkdir build; cd build; cmake ..; make```
-
-```
-
+<============= SET UP REPORT ============>
 Allowed options:
   --help                produce help message
   --source arg          the source folder to copy from
@@ -21,6 +9,10 @@ Allowed options:
   --dest arg            the destination folder to copy to
   --verbose arg         for debug
 
+This program is aiming to copy images from one folder to another.
+It is not designed to copy images, but not limit to.
+The target file copied will be rename as <Creation Date>_<Original Filename>
+Eg. example.jpg  ->>   2017_03_21_example.jpg.
 Mandatory Parameters: 
 --source 
 	The name of the device. eg. EOS_DIGITAL
@@ -44,4 +36,4 @@ Optional Parameters:
 	Choose what destination folder to backup the images
 		 Default value: /Volumes/PHOTO_BACKUP_128G/
 		 Pass in an absolute path to specify.
-```
+

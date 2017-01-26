@@ -68,7 +68,6 @@ int main(int argc, char ** argv) {
     int copy_recent;            // Whether copy from the most recent or copy everything
     int misc = 0;               // Whether skipping the misc folder or not
 
-    cout << "<============= SET UP REPORT ============>" << endl;
 
     // Section to process command line arguments
     try {
@@ -77,12 +76,12 @@ int main(int argc, char ** argv) {
         desc.add_options()
                 ("help", "produce help message")
                 ("source", po::value<string>(), "the source folder to copy from")
-                ("type",   po::value<int>(), "the file type you want to copy")
-                ("copy-recent", po::value<int>(), "if you only want to copy the recent files, the new files after the last backup")
+                ("type", po::value<int>(), "the file type you want to copy")
+                ("copy-recent", po::value<int>(),
+                 "if you only want to copy the recent files, the new files after the last backup")
                 ("misc", po::value<int>(), "to enable copy misc folder")
                 ("dest", po::value<string>(), "the destination folder to copy to")
-                ("verbose", po::value<int>(), "for debug")
-                ;
+                ("verbose", po::value<int>(), "for debug");
 
         po::variables_map vm;
         po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -93,6 +92,9 @@ int main(int argc, char ** argv) {
             usage();
             exit(1);
         }
+
+        cout << "<============= SET UP ARGS ============>" << endl;
+
 
         if (vm.count("source")) {
             device_name = vm["source"].as<string>();
@@ -110,7 +112,7 @@ int main(int argc, char ** argv) {
             if (file_type == JPEG)
                 cout << "JPEG" << endl;
             else if (file_type == CR2)
-                cout << "CR2"  << endl;
+                cout << "CR2" << endl;
             else if (file_type == ALL)
                 cout << "Everything, JPEG and CR2 and other stuff." << endl;
             else {
@@ -157,6 +159,8 @@ int main(int argc, char ** argv) {
                 cout << "Valid options are 1 or 0." << endl;
                 cout << "Default to 0" << endl;
             }
+
+
         } else {
             // do nothing
         }
@@ -174,16 +178,18 @@ int main(int argc, char ** argv) {
             verbose = vm["verbose"].as<int>();
             cout << "Verbose mode is on. " << endl;
         }
-    }
-    catch(exception& e) {
+
+        cout << "<=========== SET UP ARGS DONE =========>" << endl;
+
+
+    } catch(exception& e) {
         cerr << "error: " << e.what() << "\n";
         return 1;
-    }
-    catch(...) {
+    } catch(...) {
         cerr << "Exception of unknown type!\n";
     }
 
-
+    cout << "<=========== VALIDATING FOLDERS =========>" << endl;
 
     if (verbose) {
         cout << "device_name:\t" << device_name << endl;
@@ -225,7 +231,7 @@ int main(int argc, char ** argv) {
 
     cout << "The last file you copied since last backup with prefix: " << crd.filename << endl;
 
-    cout << "<=========== SET UP REPORT DONE =========>" << endl;
+    cout << "<=========== VALIDATING FOLDERS DONE =========>" << endl;
 
     cout << endl;
 
