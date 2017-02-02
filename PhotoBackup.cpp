@@ -528,7 +528,7 @@ void printProgress(int processed, int total) {
         else if (i == pos) std::cout << ">";
         else std::cout << " ";
     }
-    std::cout << "] " << int(progress * 100.0) << "\t" << processed << "\t/\t" << total << " %\r";
+    std::cout << "] " << processed << "\t/" << total << "\t" << int(progress * 100.0) << " %\r";
     std::cout.flush();
 }
 
