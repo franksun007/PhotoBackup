@@ -1,45 +1,28 @@
 #include <cstdio>
 #include <iostream>
 #include <unordered_set>
-#include <iterator>
-#include <string>
-#include <algorithm>
 #include <vector>
 #include <map>
-#include <cstdlib>
 
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
 
-
-#define JPEG    1               //  Macro for JPEG
-#define CR2     2
-#define ALL     3
-
-#define MISC_FOLDER "MISC"      // Macro for MISC folder
+#include "CommandLineEssential.h"
+#include "CopyRecentDetails.h"
+#include "Definition.h"
 
 using namespace std;                    // For eveything
 namespace fs = boost::filesystem;       // For boost fs
 namespace algo = boost::algorithm;      // For boost string algo
 namespace po = boost::program_options;  // For boost command line options
 
-#define DEST  "/Volumes/PHOTO_BACKUP_128G/"  // Default destination folder
 const string LS_COMMAND_WITH_DATE = "gls -1ogh --time-style=long-iso "; // ls command
 const string POSTPROCESS_COMMAND_SRC = "awk '{print $4\"_\"$6}' | tr - '_'";  // process command
 const string LS_COMMAND_NORMAL = "gls -1h ";    // normal ls command
 
-// Custom structure that contains the information about the most recent file backed up
-typedef struct {
-    int year;
-    int month;
-    int day;
-    int id;
-    string filename;        // The original filename of the file
-} copy_recent_details;
 
-void usage();  // Print out the usage of the program
 // Execute command line
 std::string exec(const char* cmd);
 // Copy the photo from src_dir to dest_dir
@@ -51,10 +34,10 @@ fs::path validateDirectory(const string &dir);
 // Choose whether to skip the MISC folder or not
 void processMisc(vector<fs::path> &src_folder_subfolders, const int misc);
 // Find out the most recent file backed up
-void processCopyRecent(copy_recent_details &crd, const fs::path &dest_dir, int file_type);
+void processCopyRecent(CopyRecentDetails crd, const fs::path &dest_dir, int file_type);
 // Skip all the photos that are already in the pool, just copy that ones that matters
 void generateCopyList(const fs::path &src_subfolder,
-                      const int file_type, const int copy_recent, const copy_recent_details &crd,
+                      const int file_type, const int copy_recent, const CopyRecentDetails &crd,
                       map<string, string> &result);
 
 // Verbose for debug
@@ -62,143 +45,19 @@ int verbose = 0;
 
 int main(int argc, char ** argv) {
 
-    string device_name;         // SD/CF card of the camera
-    string destination_folder;  // Destination folder to backup the image
-    int file_type;              // Whether want to copy CR2 or JPG or everything
-    int copy_recent;            // Whether copy from the most recent or copy everything
-    int misc = 0;               // Whether skipping the misc folder or not
-
-
-    // Section to process command line arguments
-    try {
-        po::options_description desc("Allowed options");
-
-        desc.add_options()
-                ("help", "produce help message")
-                ("source", po::value<string>(), "the source folder to copy from")
-                ("type", po::value<int>(), "the file type you want to copy")
-                ("copy-recent", po::value<int>(),
-                 "if you only want to copy the recent files, the new files after the last backup")
-                ("misc", po::value<int>(), "to enable copy misc folder")
-                ("dest", po::value<string>(), "the destination folder to copy to")
-                ("verbose", po::value<int>(), "for debug");
-
-        po::variables_map vm;
-        po::store(po::parse_command_line(argc, argv, desc), vm);
-        po::notify(vm);
-
-        if (argc == 1 || vm.count("help")) {
-            cout << desc << "\n";
-            usage();
-            exit(1);
-        }
-
-        cout << "<============= SET UP ARGS ============>" << endl;
-
-
-        if (vm.count("source")) {
-            device_name = vm["source"].as<string>();
-            cout << "The device to copy from is:\t\t" << vm["source"].as<string>() << endl;
-        } else {
-            cout << "The device to copy from is undefined." << endl;
-            cout << "Please specify the name of the device." << endl;
-            cout << "eg. --source EOS_DIGITAL" << endl;
-            exit(1);
-        }
-
-        if (vm.count("type")) {
-            file_type = vm["type"].as<int>();
-            cout << "The file type you want to copy is:\t";
-            if (file_type == JPEG)
-                cout << "JPEG" << endl;
-            else if (file_type == CR2)
-                cout << "CR2" << endl;
-            else if (file_type == ALL)
-                cout << "Everything, JPEG and CR2 and other stuff." << endl;
-            else {
-                cout << "unspecified filetype" << endl;
-                cout << "Please specify a valid filetype" << endl;
-                cout << "eg. 1 for JPEG, 2 for CR2, 3 for all" << endl;
-                exit(1);
-            }
-        } else {
-            cout << "The filetype to copy is undefined." << endl;
-            cout << "Please specify a valid filetype to copy." << endl;
-            cout << "eg. 1 for JPEG, 2 for CR2, 3 for all" << endl;
-            exit(1);
-        }
-
-        if (vm.count("copy-recent")) {
-            copy_recent = vm["copy-recent"].as<int>();
-            cout << "You want to copy files:\t\t\t";
-            if (copy_recent == 1) {
-                cout << "since the last backup." << endl;
-            } else if (copy_recent == 0) {
-                cout << "since the beginning of the time." << endl;
-            } else {
-                cout << "undefined copy-recent parameter" << endl;
-                cout << "Please specify a valid copy-recent parameter." << endl;
-                cout << "eg. 1 = \"since the last backup\", 0 = \"the beginning of the time\"" << endl;
-                exit(1);
-            }
-        } else {
-            cout << "The copy-recent parameter is undefined" << endl;
-            cout << "Please specify a valid copy-recent parameter." << endl;
-            cout << "eg. 1 = \"since the last backup\", 0 = \"the beginning of the time\"" << endl;
-            exit(1);
-        }
-
-        if (vm.count("misc")) {
-            misc = vm["misc"].as<int>();
-            if (misc == 1) {
-                cout << "Set to copy " << MISC_FOLDER << endl;
-            } else if (misc == 0) {
-                cout << "Set to skip " << MISC_FOLDER << endl;
-            } else {
-                cout << "Undefined parameter --misc" << endl;
-                cout << "Valid options are 1 or 0." << endl;
-                cout << "Default to 0" << endl;
-            }
-
-
-        } else {
-            // do nothing
-        }
-
-        if (vm.count("dest")) {
-            destination_folder = vm["dest"].as<string>();
-            cout << "Destination Folder is: " << destination_folder << endl;
-        } else {
-            cout << "Destination Folder unspecified." << endl;
-            destination_folder = DEST;
-            cout << "Destination Folder defaults to: " << DEST << endl;
-        }
-
-        if (vm.count("verbose")) {
-            verbose = vm["verbose"].as<int>();
-            cout << "Verbose mode is on. " << endl;
-        }
-
-        cout << "<=========== SET UP ARGS DONE =========>" << endl;
-
-
-    } catch(exception& e) {
-        cerr << "error: " << e.what() << "\n";
-        return 1;
-    } catch(...) {
-        cerr << "Exception of unknown type!\n";
-    }
+    CommandLineEssential cmd_args (argc, argv);
+    verbose = cmd_args.getVerbose();
 
     cout << "<=========== VALIDATING FOLDERS =========>" << endl;
 
     if (verbose) {
-        cout << "device_name:\t" << device_name << endl;
-        cout << "file_type:\t" << file_type << endl;
-        cout << "copy_recent:\t" << copy_recent << endl;
+        cout << "device_name:\t" << cmd_args.getDeviceName() << endl;
+        cout << "file_type:\t" << cmd_args.getFileType() << endl;
+        cout << "copy_recent:\t" << cmd_args.getCopyRecent() << endl;
     }
 
     // To construct and validate source directory
-    string src_folder("/Volumes/" + device_name + "/DCIM/");
+    string src_folder("/Volumes/" + cmd_args.getDeviceName() + "/DCIM/");
     fs::path src_dir = validateDirectory(src_folder);
 
     if (verbose) {
@@ -207,7 +66,7 @@ int main(int argc, char ** argv) {
 
     // To construct/get and validate all the subfolders of the source directory
     vector<fs::path> src_folder_subfolders = getAllSubFolders(src_dir);
-    processMisc(src_folder_subfolders, misc);
+    processMisc(src_folder_subfolders, cmd_args.getMisc());
 
     if (verbose) {
         cout << "src_folder_subfolders: " << endl;
@@ -217,19 +76,19 @@ int main(int argc, char ** argv) {
     }
 
     // To construct and validate the destination directory
-    fs::path dest_dir = validateDirectory(destination_folder);
+    fs::path dest_dir = validateDirectory(cmd_args.getDestinationFolder());
 
     if (verbose) {
         cout << "dest_dir: " << dest_dir << endl;
     }
 
     // To process the most recent file that's been backed in the destination directory
-    copy_recent_details crd = {0, 0, 0, 0};
-    if (copy_recent) {
-        processCopyRecent(crd, dest_dir, file_type);
+    CopyRecentDetails crd;
+    if (cmd_args.getCopyRecent()) {
+        processCopyRecent(crd, dest_dir, cmd_args.getCopyRecent());
     }
 
-    cout << "The last file you copied since last backup with prefix: " << crd.filename << endl;
+    cout << "The last file you copied since last backup with prefix: " << crd.getPhotoFilename() << endl;
 
     cout << "<=========== VALIDATING FOLDERS DONE =========>" << endl;
 
@@ -238,7 +97,7 @@ int main(int argc, char ** argv) {
     cout << "<========== GENERATING COPY LIST =========>" << endl;
 
 
-    int total_files;
+    int total_files = 0;
     // Data structure that will map subfolder to a map that :
     //      maps the original image name to the target image name with
     //      file date as prefix
@@ -247,7 +106,7 @@ int main(int argc, char ** argv) {
     for (auto src_folder_subfolder : src_folder_subfolders) {
         map<string, string> result;
         // Generate the list of photos we want to copy in a specific subdirectory
-        generateCopyList(src_folder_subfolder, file_type, copy_recent, crd, result);
+        generateCopyList(src_folder_subfolder, cmd_args.getFileType(), cmd_args.getCopyRecent(), crd, result);
         folder_to_image_list[src_folder_subfolder] = result;
 
         if (verbose) {
@@ -276,12 +135,12 @@ int main(int argc, char ** argv) {
 // Compare two pathes.
 bool compareFilenames(fs::path i, fs::path j) { return (i.string() < j.string()); }
 
-void processCopyRecent(copy_recent_details &crd, const fs::path &dest_dir, int file_type) {
+void processCopyRecent(CopyRecentDetails crd, const fs::path &dest_dir, int file_type) {
 
     string extension = ".";
-    if (file_type == 1) {
+    if (file_type == JPEG) {
         extension = ".JPG";
-    } else if (file_type == 2) {
+    } else if (file_type == CR2) {
         extension = ".CR2";
     }
 
@@ -312,34 +171,16 @@ void processCopyRecent(copy_recent_details &crd, const fs::path &dest_dir, int f
         cout << "After stem: " << component << endl;
     }
 
-    // Decompose the last element
-    vector<string> components;
-    boost::split(components, component, boost::is_any_of("_"));
-    assert(components.size() == 5);
+    crd.setArguments(component);
 
-    // Pretty unnecessary, but fill in the blanks.
-    try {
-        crd.year = atoi(components[0].c_str());
-        crd.month = atoi(components[1].c_str());
-        crd.day = atoi(components[2].c_str());
-        crd.id = atoi(components[4].c_str());
-        crd.filename = component;
-    } catch (exception& e) {
-        cerr << "error: " << e.what() << "\n";
-        cerr << "When Constructing Copy Recent Details. " << endl;
-        exit(1);
-    } catch(...) {
-        cerr << "Exception of unknown type!\n";
-        exit(1);
-    }
 
     if (verbose) {
         cout << "CRD construction succeed: " << endl;
-        cout << "\tyear: \t" << crd.year << endl;
-        cout << "\tmonth:\t" << crd.month << endl;
-        cout << "\tday:  \t" << crd.day << endl;
-        cout << "\tid:   \t" << crd.id << endl;
-        cout << "\tfilename: " << crd.filename << endl;
+        cout << "\tyear: \t" << crd.getYear() << endl;
+        cout << "\tmonth:\t" << crd.getMonth() << endl;
+        cout << "\tday:  \t" << crd.getDay() << endl;
+        cout << "\tid:   \t" << crd.getPhotoID() << endl;
+        cout << "\tfilename: " << crd.getPhotoFilename() << endl;
     }
 
 }
@@ -378,40 +219,6 @@ vector<fs::path> getAllSubFolders(const fs::path &dir) {
         }
     }
     return result;
-}
-
-
-void usage() {
-
-    cout << "This program is aiming to copy images from one folder to another." << endl;
-    cout << "It is not designed to copy images, but not limit to." << endl;
-    cout << "The target file copied will be rename as <Creation Date>_<Original Filename>" << endl;
-    cout << "Eg. example.jpg  ->>   2017_03_21_example.jpg." << endl;
-
-    cout << "Mandatory Parameters: " << endl;
-    cout << "--source " << endl;
-    cout << "\tThe name of the device. eg. EOS_DIGITAL" << endl;
-    cout << "--type" << endl;
-    cout << "\tFiltype to copy" << endl;
-    cout << "\t\t 1: only copy JPEG" << endl;
-    cout << "\t\t 2: only copy CR2" << endl;
-    cout << "\t\t 3: copy both JPEG and CR2" << endl;
-    cout << "--copy-recent" << endl;
-    cout << "\tThe parameter that specify which files you want to copy from." << endl;
-    cout << "\t\t 1: copy files since the last backup" << endl;
-    cout << "\t\t 2: copy files since the beginning of the time (all files in the device)" << endl;
-    cout << endl;
-    cout << "Optional Parameters: " << endl;
-    cout << "--misc" << endl;
-    cout << "\tChoose whether MISC folder should be copied or not, usually contains movies" << endl;
-    cout << "\t\t Default value: 0" << endl;
-    cout << "\t\t 0: not copy MISC folder" << endl;
-    cout << "\t\t 1: copy MISC folder" << endl;
-    cout << "--dest" << endl;
-    cout << "\tChoose what destination folder to backup the images" << endl;
-    cout << "\t\t Default value: " << DEST << endl;
-    cout << "\t\t Pass in an absolute path to specify." << endl;
-    cout << endl;
 }
 
 void processMisc(vector<fs::path> &src_folder_subfolders, const int misc) {
@@ -453,13 +260,13 @@ std::string exec(const char* cmd) {
 }
 
 void generateCopyList(const fs::path &src_subfolder,
-                                const int file_type, const int copy_recent, const copy_recent_details &crd,
+                                const int file_type, const int copy_recent, const CopyRecentDetails &crd,
                                 map<string, string> &result) {
 
     std::string extension = "*.*";
-    if (file_type == 1) {
+    if (file_type == JPEG) {
         extension = "*.JPG";
-    } else if (file_type == 2) {
+    } else if (file_type == CR2) {
         extension = "*.CR2";
     }
 
@@ -499,7 +306,8 @@ void generateCopyList(const fs::path &src_subfolder,
 
         // If matching the copy_recent condition, add to the map.
         if (copy_recent) {
-            if ((modified_image > crd.filename) && modified_image.find(crd.filename) == string::npos) {
+            if ((modified_image > crd.getPhotoFilename()) &&
+                    modified_image.find(crd.getPhotoFilename()) == string::npos) {
                 result[original_image] = modified_image;
 
                 if (verbose) {

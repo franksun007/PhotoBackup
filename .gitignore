@@ -2,3 +2,6 @@ cmake-*
 .idea
 *.dSYM
 java
+*.o
+PhotoBackup
+
