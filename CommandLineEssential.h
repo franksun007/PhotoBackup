@@ -15,12 +15,12 @@ public:
     CommandLineEssential(int argc, char ** argv);
     static void argsUsage();
 
-    string getDeviceName() { return device_name; };
-    string getDestinationFolder() { return destination_folder; };
-    int getFileType() { return file_type; };
-    int getCopyRecent() { return copy_recent; };
-    int getMisc() { return misc; };
-    int getVerbose() { return verbose; };
+    string getDeviceName() const { return device_name; };
+    string getDestinationFolder() const { return destination_folder; };
+    int getFileType() const { return file_type; };
+    int getCopyRecent() const { return copy_recent; };
+    int getMisc() const { return misc; };
+    int getVerbose() const { return verbose; };
 
 private:
     string device_name;         // SD/CF card of the camera

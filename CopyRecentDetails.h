@@ -16,10 +16,10 @@ public:
     CopyRecentDetails(string lastFile);
     void setArguments(string lastFile);
 
-    int getYear() { return year; };
-    int getMonth() { return month; };
-    int getDay() { return day; };
-    int getPhotoID() { return id; };
+    int getYear() const { return year; };
+    int getMonth() const { return month; };
+    int getDay() const { return day; };
+    int getPhotoID() const { return id; };
     string getPhotoFilename() const { return filename; };
 
 private:

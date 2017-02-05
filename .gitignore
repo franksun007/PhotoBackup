@@ -4,4 +4,5 @@ cmake-*
 java
 *.o
 PhotoBackup
+.DS_Store
 
