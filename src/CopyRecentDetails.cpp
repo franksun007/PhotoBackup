@@ -21,6 +21,17 @@ namespace CopyRecentDetails {
         this->device_id = other.device_id;
     }
 
+    CopyRecentDetails &CopyRecentDetails::operator=(const CopyRecentDetails &other) {
+        this->year = other.year;
+        this->month = other.month;
+        this->day = other.day;
+        this->id = other.id;
+        this->filename = other.filename;
+        this->device_id = other.device_id;
+        return *this;
+    }
+
+
     CopyRecentDetails::CopyRecentDetails(string lastFile) {
         setArguments(lastFile);
     }

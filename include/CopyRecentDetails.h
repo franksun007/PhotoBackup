@@ -16,7 +16,8 @@ namespace CopyRecentDetails {
 
     public:
         CopyRecentDetails() : year(0), month(0), day(0), id(""), filename(""), device_id("") { }
-        CopyRecentDetails(const CopyRecentDetails &other);
+        CopyRecentDetails(const CopyRecentDetails &);
+        CopyRecentDetails& operator=(const CopyRecentDetails &);
         CopyRecentDetails(string lastFile);
 
         void setArguments(string lastFile);

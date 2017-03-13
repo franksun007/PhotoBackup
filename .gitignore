@@ -8,3 +8,5 @@ PhotoBackup
 
 build
 lib/*
+include/srclib.a
+gtest
