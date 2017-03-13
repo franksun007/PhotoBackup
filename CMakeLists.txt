@@ -4,7 +4,7 @@ project(PhotoBackup)
 set(CMAKE_CXX_STANDARD 11)
 
 set(SOURCE_FILES
-    PhotoBackup.cpp CommandLineEssential.cpp CommandLineEssential.h Definition.h CopyRecentDetails.h CopyRecentDetails.cpp)
+        src/PhotoBackup.cpp src/CommandLineEssential.cpp include/CommandLineEssential.h include/Definition.h include/CopyRecentDetails.h src/CopyRecentDetails.cpp test/Test.cpp include/PhotoBackup.h include/Shared.h src/Shared.cpp)
 
 set(BOOST_VERSION 1.63.0)
 link_directories(/usr/local/Cellar/boost/${BOOST_VERSION}/include)

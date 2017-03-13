@@ -6,3 +6,5 @@ java
 PhotoBackup
 .DS_Store
 
+build
+lib/*
