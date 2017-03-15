@@ -46,9 +46,9 @@ namespace CopyRecentDetails {
 
         // Pretty unnecessary, but fill in the blanks.
         try {
-            year = atoi(components[0].c_str());
-            month = atoi(components[1].c_str());
-            day = atoi(components[2].c_str());
+            this->year = atoi(components[0].c_str());
+            this->month = atoi(components[1].c_str());
+            this->day = atoi(components[2].c_str());
 
 //            if (strcmp(components[3].c_str(), "IMG") == 0 || components.size() == 4) {
 //                id = components[3];
@@ -63,7 +63,7 @@ namespace CopyRecentDetails {
 //                    id = "_" + components[i];
 //                }
 //            }
-            filename = lastFile;
+            this->filename = lastFile;
         } catch (exception &e) {
             cerr << "error: " << e.what() << "\n";
             cerr << "When Constructing Copy Recent Details. " << endl;

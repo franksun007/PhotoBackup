@@ -64,9 +64,8 @@ $(BUILD_TEST_DIR)/%.o: $(TEST_DIR)/%.$(CPP_EXT)
 test: $(TEST)
 
 
-all: 
-	make $(TARGET) 
-	make $(TEST)
+all: $(TARGET) 
+	# make $(TEST)
 
 clean:
 	@echo "Cleaning...";

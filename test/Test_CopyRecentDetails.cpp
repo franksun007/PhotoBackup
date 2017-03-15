@@ -23,16 +23,9 @@ TEST_F (Test_CopyRecentDetails, Test_CopyRecentDetailsConstructorBasic) {
 
 }
 
-TEST_F (Test_CopyRecentDetails, Test_CopyRecentDetailsConstructorSetArgsOldVer) {
+TEST_F (Test_CopyRecentDetails, Test_CopyRecentDetailsConstructorSetArgsException) {
     CopyRecentDetails::CopyRecentDetails crds;
-    crds.setArguments("2017_03_03_IMG_0046.JPG");
-    ASSERT_EQ(crds.getYear(), 2017);
-    ASSERT_EQ(crds.getMonth(), 3);
-    ASSERT_EQ(crds.getDay(), 3);
-    ASSERT_EQ(crds.getPhotoFilename(), "2017_03_03_IMG_0046.JPG");
-    ASSERT_EQ(crds.getDeviceID(), "");
-    ASSERT_EQ(crds.getPhotoID(), "IMG_0046.JPG");
-
+    ASSERT_(crds.setArguments(""));
 }
 
 TEST_F (Test_CopyRecentDetails, Test_CopyRecentDetailsConstructorCopy) {
