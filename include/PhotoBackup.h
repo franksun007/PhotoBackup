@@ -9,7 +9,7 @@ namespace fs = boost::filesystem;       // For boost fs
 namespace algo = boost::algorithm;      // For boost string algo
 namespace po = boost::program_options;  // For boost command line options
 
-namespace crds = CopyRecentDetails;
+namespace pholders = PhotoHolder;
 
 
 // Copy the photo from src_dir to dest_dir
@@ -21,10 +21,10 @@ fs::path validateDirectory(const string &dir);
 // Choose whether to skip the MISC folder or not
 void processMisc(vector<fs::path> &src_folder_subfolders, const int misc);
 // Find out the most recent file backed up
-void processCopyRecent(crds::CopyRecentDetails &crd, const fs::path &dest_dir, int file_type);
+void processCopyRecent(pholders::PhotoHolder &pholder, const fs::path &dest_dir, int file_type);
 // Skip all the photos that are already in the pool, just copy that ones that matters
 void generateCopyList(const fs::path &src_subfolder,
-                      const int file_type, const int copy_recent, const crds::CopyRecentDetails &crd,
+                      const int file_type, const int copy_recent, const pholders::PhotoHolder &pholder,
                       map<string, string> &result);
 
 

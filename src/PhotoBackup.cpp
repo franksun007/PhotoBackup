@@ -9,7 +9,7 @@
 #include <boost/program_options.hpp>
 
 #include "../include/CommandLineEssential.h"
-#include "../include/CopyRecentDetails.h"
+#include "../include/PhotoHolder.h"
 #include "../include/Definition.h"
 #include "../include/Shared.h"
 #include "../include/PhotoBackup.h"
@@ -19,7 +19,7 @@ namespace fs = boost::filesystem;       // For boost fs
 namespace algo = boost::algorithm;      // For boost string algo
 namespace po = boost::program_options;  // For boost command line options
 
-namespace crds = CopyRecentDetails;
+namespace pholder = PhotoHolder;
 
 const string LS_COMMAND_WITH_DATE = "gls -1ogh --time-style=long-iso "; // ls command
 const string POSTPROCESS_COMMAND_SRC = "awk '{print $4\"_\"$6}' | tr - '_'";  // process command
@@ -56,9 +56,9 @@ int main(int argc, char ** argv) {
 
     if (verbose) {
         cout << "src_folder_subfolders: " << endl;
-        for (auto src_folder_subfolder : src_folder_subfolders) {
-            cout << "\t" << src_folder_subfolder << endl;
-        }
+//        for (auto src_folder_subfolder : src_folder_subfolders) {
+//            cout << "\t" << src_folder_subfolder << endl;
+//        }
     }
 
     // To construct and validate the destination directory
@@ -70,13 +70,13 @@ int main(int argc, char ** argv) {
 
     // To process the most recent file that's been backed in the destination directory
 
-    crds::CopyRecentDetails crd;
+    pholder::PhotoHolder pholder;
     if (verbose) {
-        cout << "Empty crd constructed" << endl;
+        cout << "Empty pholder constructed" << endl;
     }
     if (cmd_args.getCopyRecent()) {
-        processCopyRecent(crd, dest_dir, cmd_args.getCopyRecent());
-        cout << "The last file you copied since last backup with prefix: " << crd.getPhotoFilename() << endl;
+        processCopyRecent(pholder, dest_dir, cmd_args.getCopyRecent());
+        cout << "The last file you copied since last backup with prefix: " << pholder.getPhotoFilename() << endl;
     }
 
     cout << "<=========== VALIDATING FOLDERS DONE =========>" << endl;
@@ -98,7 +98,7 @@ int main(int argc, char ** argv) {
             cout << "Generating copy list ... " << endl;
         }
         // Generate the list of photos we want to copy in a specific subdirectory
-        generateCopyList(src_folder_subfolder, cmd_args.getFileType(), cmd_args.getCopyRecent(), crd, result);
+        generateCopyList(src_folder_subfolder, cmd_args.getFileType(), cmd_args.getCopyRecent(), pholder, result);
         folder_to_image_list[src_folder_subfolder] = result;
 
         if (verbose) {
@@ -127,7 +127,7 @@ int main(int argc, char ** argv) {
 // Compare two pathes.
 bool compareFilenames(fs::path i, fs::path j) { return (i.string() < j.string()); }
 
-void processCopyRecent(crds::CopyRecentDetails &crd, const fs::path &dest_dir, int file_type) {
+void processCopyRecent(pholder::PhotoHolder &pholder, const fs::path &dest_dir, int file_type) {
 
     string extension = ".";
     if (file_type == JPEG) {
@@ -163,16 +163,19 @@ void processCopyRecent(crds::CopyRecentDetails &crd, const fs::path &dest_dir, i
         cout << "After stem: " << component << endl;
     }
 
-    crd.setArguments(component);
+    pholder.setArgumentsLastFile(component);
 
 
     if (verbose) {
-        cout << "CRD construction succeed: " << endl;
-        cout << "\tyear: \t" << crd.getYear() << endl;
-        cout << "\tmonth:\t" << crd.getMonth() << endl;
-        cout << "\tday:  \t" << crd.getDay() << endl;
-        cout << "\tid:   \t" << crd.getPhotoID() << endl;
-        cout << "\tfilename: " << crd.getPhotoFilename() << endl;
+        cout << "pholder construction succeed: " << endl;
+        cout << "\tSTATIC: " << pholder.getDeviceID() << endl;
+        cout << "\tPUBLIC: " << endl;
+        cout << "\tyear: \t" << pholder.getYear() << endl;
+        cout << "\tmonth:\t" << pholder.getMonth() << endl;
+        cout << "\tday:  \t" << pholder.getDay() << endl;
+        cout << "\td_id: \t" << pholder.getFilenameDeviceID() << endl;
+        cout << "\tid:   \t" << pholder.getPhotoID() << endl;
+        cout << "\tfilename: " << pholder.getPhotoFilename() << endl;
     }
 
 }
@@ -222,6 +225,7 @@ void processMisc(vector<fs::path> &src_folder_subfolders, const int misc) {
         vector<int> indicies;
         for (int i = 0 ; i < src_folder_subfolders.size(); i++) {
             if (verbose) {
+                cout << "From processMisc: " << endl;
                 cout << src_folder_subfolders[i].string() << endl;
             }
             if (src_folder_subfolders[i].string().find(MISC_FOLDER) != string::npos) {
@@ -240,7 +244,7 @@ void processMisc(vector<fs::path> &src_folder_subfolders, const int misc) {
 }
 
 void generateCopyList(const fs::path &src_subfolder,
-                                const int file_type, const int copy_recent, const crds::CopyRecentDetails &crd,
+                                const int file_type, const int copy_recent, const pholder::PhotoHolder &pholder,
                                 map<string, string> &result) {
 
     std::string extension = "*.*";
@@ -258,7 +262,7 @@ void generateCopyList(const fs::path &src_subfolder,
 
     if (verbose) {
         cout << "Command result: " << endl;
-        cout << result_from_exec << endl;
+//        cout << result_from_exec << endl;
     }
 
     // If the subfolder contains nothing
@@ -282,30 +286,27 @@ void generateCopyList(const fs::path &src_subfolder,
 
     for (int i = 0; i < original_images.size(); i++) {
         auto original_image = original_images[i];
+        // modified image only contains year, month, day + image_id
         auto modified_image = modified_images[i];
 
         if (original_image.size() == 0)
             continue;
 
-        crds::CopyRecentDetails img;
-        img.setArguments(modified_image);
+        pholder::PhotoHolder img;
+        img.setArgumentsModifiedImage(modified_image);
 
         // If matching the copy_recent condition, add to the map.
         if (copy_recent) {
-
-            cout << crd.getPhotoFilename() << endl;
-            if (
-                        // FIX
-                        img.getPhotoFilename() > crd.getPhotoFilename() &&
-                        img.getPhotoFilename().find(crd.getPhotoFilename()) == string::npos) {
+            if (img > pholder &&
+                img.getPhotoFilename().find(pholder.getTruncatedPhotoFilename()) == string::npos) {
 
                 result[original_image] = modified_image;
 
                 if (verbose) {
+                    cout << "Generating CopyList: " << endl;
                     cout << original_image << endl;
                     cout << modified_image << endl;
                 }
-
             }
         } else {    // else we add everything
             result[original_image] = modified_image;
@@ -358,7 +359,7 @@ void copyPhotos(const map<fs::path, map<string, string>> &folder_to_image_list, 
                 cout << "Copying: " << src_prefix / original_filename << endl;
             }
 
-             fs::copy(src_prefix / original_filename, dest_dir / destination_filename);
+            fs::copy(src_prefix / original_filename, dest_dir / destination_filename);
             progress++;
             printProgress(progress, total);
         }

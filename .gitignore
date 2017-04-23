@@ -11,3 +11,4 @@ lib/*
 include/srclib.a
 gtest
 bin
+Sandbox
