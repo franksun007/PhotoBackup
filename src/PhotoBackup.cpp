@@ -297,10 +297,9 @@ void generateCopyList(const fs::path &src_subfolder,
 
         // If matching the copy_recent condition, add to the map.
         if (copy_recent) {
-            if (img > pholder &&
-                img.getPhotoFilename().find(pholder.getTruncatedPhotoFilename()) == string::npos) {
+            if (img > pholder) {
 
-                result[original_image] = modified_image;
+                result[original_image] = img.getPhotoFilename();
 
                 if (verbose) {
                     cout << "Generating CopyList: " << endl;
