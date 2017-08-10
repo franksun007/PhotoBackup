@@ -1,3 +1,4 @@
+```
 Allowed options:  
   --help                produce help message
   --source arg          the source folder to copy from
@@ -10,8 +11,9 @@ Allowed options:
 
 This program is aiming to copy images from one folder to another.
 It is not designed to copy images, but not limit to.
-The target file copied will be rename as <Creation Date>_<Original Filename>
-Eg. example.jpg  ->>   2017_03_21_example.jpg.
+The target file copied will be rename as \<Creation Date\>\_\<Original Filename\>
+Eg. example.jpg  ->>   2017\_03\_21\_example.jpg.
+
 Mandatory Parameters: 
 --source 
 	The name of the device. eg. EOS_DIGITAL
@@ -36,3 +38,4 @@ Optional Parameters:
 		 Default value: /Volumes/PHOTO_BACKUP_128G/
 		 Pass in an absolute path to specify.
 
+```

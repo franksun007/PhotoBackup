@@ -144,5 +144,7 @@ namespace PhotoHolder {
         return nullptr;
     }
 
-    string PhotoHolder::device_id = PhotoHolder::identifyDeviceId();
+    // TODO FIXME: this is a bug that should be fixed, will cause SIGFAULT
+//    string PhotoHolder::device_id = PhotoHolder::identifyDeviceId();
+    string PhotoHolder::device_id = "";
 }
