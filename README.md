@@ -1,4 +1,4 @@
-Allowed options:
+Allowed options:  
   --help                produce help message
   --source arg          the source folder to copy from
   --type arg            the file type you want to copy
