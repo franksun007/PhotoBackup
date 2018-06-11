@@ -18,3 +18,8 @@
 # Ignore jekyll build output.
 /production
 /.sass-cache
+
+
+# Personal Preference
+.vimrc
+.clang_complete
