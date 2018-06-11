@@ -1,0 +1,10 @@
+build --cxxopt="-std=c++14" --host_cxxopt="-std=c++14"
+build --copt="-Werror=return-type" --host_copt="-Werror=return-type"
+build --copt="-fopenmp"
+
+build:opt -c opt --copt="-O3" --copt="-march=native" \
+				--copt="-mtune=native" 
+build:cuda --spawn_strategy=standalone --action_env=TF_NEED_CUDA=1 \
+           --crosstool_top=@local_config_cuda//crosstool:toolchain \
+           --define=using_cuda_nvcc=true 
+
