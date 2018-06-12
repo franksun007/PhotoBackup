@@ -50,5 +50,8 @@ cc_binary(
     linkopts = [
       "-lboost_system",
       "-lboost_filesystem",
+    ],
+    data = [
+      "//scripts:linux_diskutil"
     ]
 )
