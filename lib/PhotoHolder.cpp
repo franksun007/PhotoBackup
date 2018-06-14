@@ -3,7 +3,7 @@
 //
 
 #include "PhotoHolder.h"
-#include "Shared.h"
+#include "utils/utils.h"
 
 #include <vector>
 #include <iostream>
@@ -120,7 +120,7 @@ namespace PhotoHolder {
     }
 
     string PhotoHolder::identifyDeviceId() {
-        string info = exec(USB_DEVICE_COMMAND);
+        string info = cmd_execute(USB_DEVICE_COMMAND);
 
         vector<string> splitted;
         boost::split(splitted, info, boost::is_any_of("\n"));

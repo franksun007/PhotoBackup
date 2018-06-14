@@ -11,7 +11,7 @@
 #include "CommandLineEssential.h"
 #include "PhotoHolder.h"
 #include "Definition.h"
-#include "Shared.h"
+#include "utils/utils.h"
 #include "PhotoBackup.h"
 
 using namespace std;                    // For eveything
@@ -258,7 +258,7 @@ void generateCopyList(const fs::path &src_subfolder,
 
     // Get a list of the original images.
     vector<string> original_images;
-    result_from_exec = exec(("(cd " + src_subfolder.string() + " && " + LS_COMMAND_NORMAL + extension + ")" ).c_str());
+    result_from_exec = cmd_execute(("(cd " + src_subfolder.string() + " && " + LS_COMMAND_NORMAL + extension + ")" ).c_str());
 
     if (verbose) {
         cout << "Command result: " << endl;
@@ -277,7 +277,7 @@ void generateCopyList(const fs::path &src_subfolder,
 
     // Get a list of the original images, that the name has been changed to the target filename
     vector<string> modified_images;
-    result_from_exec = exec(("(cd " + src_subfolder.string() + " && " + LS_COMMAND_WITH_DATE +
+    result_from_exec = cmd_execute(("(cd " + src_subfolder.string() + " && " + LS_COMMAND_WITH_DATE +
             extension + ") | " + POSTPROCESS_COMMAND_SRC).c_str());
     boost::split(modified_images, result_from_exec, boost::is_any_of("\n"));
 

@@ -7,8 +7,8 @@
 #include <iostream>
 
 #include "CommandLineEssential.h"
-#include "Definition.h"
-#include "Shared.h"
+#include "definition/constants.h"
+#include "utils/utils.h"
 
 using namespace std;
 namespace po = boost::program_options;  // For boost command line options
@@ -139,7 +139,7 @@ CommandLineEssential::CommandLineEssential(int argc, char **argv) {
 }
 
 string CommandLineEssential::getSerialIDOfSource() {
-    string usbinfo = exec(USB_SYSTEM_PROFILER.c_str());
+    string usbinfo = cmd_execute(USB_SYSTEM_PROFILER.c_str());
     cout << usbinfo << endl;
     return usbinfo;
 }
